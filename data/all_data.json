@@ -30845,33 +30845,33 @@
         ]
       },
       "meta": {
-        "spend": 2500.85,
+        "spend": 2501.46,
         "clicks": 383,
-        "impressions": 30601,
+        "impressions": 30610,
         "conversions": 15.0,
         "conversionValue": 9814.08,
         "campaigns": [
           {
             "name": "KON-DRTG-4-23",
-            "spend": 469.03,
+            "spend": 469.19,
             "clicks": 59,
-            "impressions": 2706,
+            "impressions": 2707,
             "conversions": 4.0,
             "conversionValue": 1845.46
           },
           {
             "name": "Adv+ CON Obecna 3_25 - Příspěvky/Fotky/Videa",
-            "spend": 781.03,
+            "spend": 781.07,
             "clicks": 130,
-            "impressions": 10500,
+            "impressions": 10503,
             "conversions": 3.0,
             "conversionValue": 754.56
           },
           {
             "name": "17/6/2025 | DYN. AKV.",
-            "spend": 1250.79,
+            "spend": 1251.2,
             "clicks": 194,
-            "impressions": 17395,
+            "impressions": 17400,
             "conversions": 8.0,
             "conversionValue": 7214.06
           }
@@ -30929,9 +30929,9 @@
         "campaigns": []
       },
       "meta": {
-        "spend": 29.9,
+        "spend": 29.91,
         "clicks": 126,
-        "impressions": 13388,
+        "impressions": 13392,
         "conversions": 0.0,
         "conversionValue": 0.0,
         "campaigns": [
@@ -30939,15 +30939,15 @@
             "name": "TOF | Conversions | Svadobné oznámenia",
             "spend": 11.95,
             "clicks": 53,
-            "impressions": 5898,
+            "impressions": 5899,
             "conversions": 0,
             "conversionValue": 0
           },
           {
             "name": "Konverze | DYN. AKV.",
-            "spend": 17.92,
+            "spend": 17.93,
             "clicks": 73,
-            "impressions": 7488,
+            "impressions": 7491,
             "conversions": 0,
             "conversionValue": 0
           },
@@ -30974,58 +30974,66 @@
         "campaigns": []
       },
       "meta": {
-        "spend": 372.85,
-        "clicks": 55,
-        "impressions": 4460,
+        "spend": 587.69,
+        "clicks": 84,
+        "impressions": 7084,
         "conversions": 1.0,
         "conversionValue": 313.23,
         "campaigns": [
           {
             "name": "KON-DRTG-4-23",
-            "spend": 91.28,
-            "clicks": 11,
-            "impressions": 473,
+            "spend": 136.63,
+            "clicks": 14,
+            "impressions": 669,
             "conversions": 1.0,
             "conversionValue": 313.23
           },
           {
             "name": "Adv+ CON Obecna 3_25 - Příspěvky/Fotky/Videa",
-            "spend": 119.0,
-            "clicks": 18,
-            "impressions": 1600,
+            "spend": 176.47,
+            "clicks": 28,
+            "impressions": 2411,
             "conversions": 0,
             "conversionValue": 0
           },
           {
             "name": "17/6/2025 | DYN. AKV.",
-            "spend": 162.57,
-            "clicks": 26,
-            "impressions": 2387,
+            "spend": 274.59,
+            "clicks": 42,
+            "impressions": 4004,
             "conversions": 0,
             "conversionValue": 0
           }
         ]
       },
       "sklik": {
-        "spend": 7.37,
-        "clicks": 2,
-        "impressions": 248,
+        "spend": 29.32,
+        "clicks": 7,
+        "impressions": 611,
         "conversions": 0.0,
         "conversionValue": 0.0,
         "campaigns": [
           {
             "name": "DRTG | Produkty + Kategorie",
-            "spend": 4.73,
-            "clicks": 1,
-            "impressions": 212,
+            "spend": 19.45,
+            "clicks": 4,
+            "impressions": 545,
             "conversions": 0.0,
             "conversionValue": 0.0
           },
           {
             "name": "ZI | Vše | iOznameni",
-            "spend": 2.64,
+            "spend": 5.75,
+            "clicks": 2,
+            "impressions": 50,
+            "conversions": 0.0,
+            "conversionValue": 0.0
+          },
+          {
+            "name": "DRTG | Opuštěný košík | Desktop",
+            "spend": 4.12,
             "clicks": 1,
-            "impressions": 36,
+            "impressions": 16,
             "conversions": 0.0,
             "conversionValue": 0.0
           }
@@ -31042,25 +31050,25 @@
         "campaigns": []
       },
       "meta": {
-        "spend": 5.28,
-        "clicks": 21,
-        "impressions": 2199,
+        "spend": 8.36,
+        "clicks": 29,
+        "impressions": 3613,
         "conversions": 0.0,
         "conversionValue": 0.0,
         "campaigns": [
           {
             "name": "TOF | Conversions | Svadobné oznámenia",
-            "spend": 2.4,
-            "clicks": 7,
-            "impressions": 1019,
+            "spend": 3.57,
+            "clicks": 9,
+            "impressions": 1542,
             "conversions": 0,
             "conversionValue": 0
           },
           {
             "name": "Konverze | DYN. AKV.",
-            "spend": 2.83,
-            "clicks": 14,
-            "impressions": 1177,
+            "spend": 4.74,
+            "clicks": 20,
+            "impressions": 2068,
             "conversions": 0,
             "conversionValue": 0
           },
