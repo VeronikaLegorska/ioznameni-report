@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>iOznámení — Report</title>
+<style>
+#auth-overlay {
+  position:fixed;inset:0;background:#fff;z-index:9999;
+  display:flex;align-items:center;justify-content:center;
+}
+#auth-box {
+  text-align:center;padding:40px 48px;border-radius:16px;
+  box-shadow:0 8px 32px rgba(0,0,0,.12);max-width:340px;width:100%;
+}
+#auth-box h2 { margin:0 0 8px;font-size:22px;color:#1a1a1a; }
+#auth-box p  { margin:0 0 24px;color:#767676;font-size:14px; }
+#auth-pwd {
+  width:100%;box-sizing:border-box;padding:12px 16px;font-size:15px;
+  border:2px solid #E8E8E8;border-radius:8px;outline:none;
+  transition:border .2s;
+}
+#auth-pwd:focus { border-color:#D61E64; }
+#auth-btn {
+  margin-top:12px;width:100%;padding:12px;font-size:15px;font-weight:600;
+  background:#D61E64;color:#fff;border:none;border-radius:8px;cursor:pointer;
+  transition:opacity .2s;
+}
+#auth-btn:hover { opacity:.88; }
+#auth-err { margin-top:12px;color:#D61E64;font-size:13px;min-height:18px; }
+</style>
+<script>
+(function(){
+  const HASH = "527c149a88be012d87fb85297464e7fc59bbc012f7b74174769082c95e78e320";
+  if (sessionStorage.getItem("ioz_auth") === HASH) return;
+  document.addEventListener("DOMContentLoaded", function(){
+    var overlay = document.getElementById("auth-overlay");
+    if (overlay) overlay.style.display = "flex";
+    document.getElementById("auth-pwd").focus();
+  });
+  async function check() {
+    var pwd = document.getElementById("auth-pwd").value;
+    var buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(pwd));
+    var hex = Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,"0")).join("");
+    if (hex === HASH) {
+      sessionStorage.setItem("ioz_auth", HASH);
+      document.getElementById("auth-overlay").style.display = "none";
+    } else {
+      document.getElementById("auth-err").textContent = "Špatné heslo, zkus znovu.";
+      document.getElementById("auth-pwd").value = "";
+      document.getElementById("auth-pwd").focus();
+    }
+  }
+  window._authCheck = check;
+  window._authKey = function(e){ if(e.key==="Enter") check(); };
+})();
+</script>
+<style>
+:root {
+  --pink:       #D61E64;
+  --gold:       #FDBA01;
+  --green:      #6FA32B;
+  --ink:        #1a1a1a;
+  --gray-text:  #767676;
+  --gray-light: #FAFAFA;
+  --gray-line:  #E8E8E8;
+  --white:      #fff;
+  --shadow:     0 4px 14px rgba(0,0,0,.08);
+  --radius:     12px;
+  --gads:       var(--gold);
+  --meta:       var(--pink);
+  --sklik:      var(--green);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--white);color:var(--ink);font-family:-apple-system,'Segoe UI',Roboto,system-ui,sans-serif;min-height:100vh}
+
+/* HEADER */
+header{background:var(--white);border-bottom:1px solid var(--gray-line);padding:0 28px;height:60px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.brand{display:flex;align-items:center;gap:9px}
+.brand-dot{width:8px;height:8px;background:var(--pink);border-radius:50%}
+.brand h1{font-size:1rem;font-weight:600;color:var(--ink)}
+.brand h1 span{color:var(--pink);font-weight:700}
+.btn-ai{background:var(--pink);color:#fff;border:none;border-radius:8px;padding:8px 16px;font-size:.82rem;font-weight:600;cursor:pointer}
+.btn-ai:hover{opacity:.85}
+
+main{padding:24px 32px 40px;max-width:1320px;margin:0 auto}
+
+/* FILTER BAR */
+.filterbar{display:flex;gap:28px;align-items:flex-end;flex-wrap:wrap;padding:16px 20px;background:var(--gray-light);border:1px solid var(--gray-line);border-radius:var(--radius);margin-bottom:24px}
+.filter-group{display:flex;flex-direction:column;gap:6px}
+.filter-label{font-size:.64rem;text-transform:uppercase;letter-spacing:.05em;color:var(--gray-text);font-weight:700}
+.pill-group{display:flex;gap:3px;background:var(--white);border:1px solid var(--gray-line);border-radius:8px;padding:3px}
+.pill{border:none;background:transparent;padding:6px 14px;font-size:.78rem;font-weight:600;color:var(--gray-text);border-radius:6px;cursor:pointer;transition:all .12s;white-space:nowrap}
+.pill:hover{color:var(--ink)}
+.pill.active{background:var(--pink);color:#fff}
+.range-row{display:flex;align-items:center;gap:6px}
+.range-row input[type=date]{border:1px solid var(--gray-line);border-radius:8px;padding:6px 9px;font-size:.78rem;background:var(--white);color:var(--ink)}
+.range-row .sep{color:var(--gray-text);font-size:.78rem}
+
+/* KPI ROW */
+.market-block{margin-bottom:28px}
+.market-block-title{font-weight:600;font-size:.85rem;color:var(--gray-text);margin-bottom:10px}
+.kpi-row{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.kpi-box{background:var(--white);border:2px solid var(--gold);border-radius:var(--radius);padding:18px 20px;box-shadow:var(--shadow)}
+.kpi-box .l{font-size:.7rem;text-transform:uppercase;letter-spacing:.04em;color:var(--gray-text);font-weight:600;margin-bottom:8px}
+.kpi-box .v{font-size:1.55rem;font-weight:700;color:var(--ink)}
+
+/* CHANNELS SECTION */
+.section-title{font-weight:600;font-size:.95rem;margin-bottom:14px;margin-top:6px}
+.channels-grid{display:grid;grid-template-columns:1.4fr 1fr;gap:16px;margin-bottom:28px}
+.chart-card{background:var(--white);border:2px solid var(--gold);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow)}
+.chart-card-title{font-size:.78rem;font-weight:700;color:var(--ink);text-transform:uppercase;letter-spacing:.04em;margin-bottom:16px}
+.bar-chart{display:flex;align-items:flex-end;gap:24px;height:180px;padding:0 8px}
+.bar-col{display:flex;flex-direction:column;align-items:center;flex:1;height:100%;justify-content:flex-end}
+.bar-val{font-size:.74rem;font-weight:700;color:var(--ink);margin-bottom:6px}
+.bar-rect{width:44px;border-radius:5px 5px 0 0;transition:height .2s}
+.bar-name{margin-top:8px;font-size:.74rem;color:var(--gray-text);font-weight:600}
+.donut-wrap{display:flex;flex-direction:column;align-items:center}
+.donut-legend{display:flex;flex-direction:column;gap:7px;margin-top:14px;width:100%}
+.donut-legend-row{display:flex;align-items:center;gap:7px;font-size:.78rem;color:var(--ink)}
+.donut-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.donut-legend-row .pct{margin-left:auto;color:var(--gray-text);font-weight:600}
+
+/* PLATFORM GRID */
+.platform-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px}
+
+/* CARD */
+.card{background:var(--white);border:2px solid var(--gold);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden}
+.card-header{display:flex;align-items:center;gap:10px;padding:14px 18px;flex-wrap:wrap}
+.plat-icon{width:26px;height:26px;border-radius:6px;flex-shrink:0}
+.plat-name{font-weight:600;font-size:.88rem;color:var(--ink)}
+.plat-badge{font-size:.68rem;font-weight:600;padding:2px 9px;border-radius:9px;border:1px solid var(--gray-line);color:var(--gray-text);margin-left:auto}
+.b-ok{color:#1a7a3c;border-color:#cfe9d8}
+.b-empty{color:var(--gray-text)}
+.b-err{color:#c0392b;border-color:#f5d4d0}
+.card-body{padding:0 18px 16px}
+
+/* METRICS */
+.metrics{display:grid;grid-template-columns:1fr 1fr;gap:1px;margin-bottom:12px;background:var(--gray-line);border:1px solid var(--gray-line);border-radius:8px;overflow:hidden}
+.metric{background:var(--white);padding:9px 12px}
+.metric-l{font-size:.64rem;text-transform:uppercase;letter-spacing:.04em;color:var(--gray-text);font-weight:600;margin-bottom:2px}
+.metric-v{font-size:1.1rem;font-weight:700;color:var(--ink)}
+.kpi{display:flex;gap:14px;font-size:.76rem;color:var(--gray-text);border-top:1px solid var(--gray-line);padding-top:10px;flex-wrap:wrap}
+.kpi strong{color:var(--ink)}
+.no-data{text-align:center;padding:28px 0;color:#bbb;font-size:.85rem}
+
+/* CAMPAIGN LIST */
+.camp-toggle{margin-top:10px;font-size:.76rem;color:var(--gray-text);cursor:pointer;font-weight:600;user-select:none;display:flex;align-items:center;gap:4px}
+.camp-toggle:hover{color:var(--ink)}
+.camp-list{display:none;margin-top:8px}
+.camp-list.open{display:block}
+
+/* CAMPAIGN ROW */
+.camp-row{border-bottom:1px solid var(--gray-line);padding:6px 0}
+.camp-row:last-child{border-bottom:none}
+.camp-row-header{display:flex;justify-content:space-between;align-items:center;cursor:pointer}
+.camp-row-name{font-size:.79rem;font-weight:500;color:var(--ink);max-width:65%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.camp-row-nums{font-size:.78rem;color:var(--ink);font-weight:600;display:flex;gap:10px}
+
+/* ADSETS */
+.adsets{padding:4px 0 0 10px;display:none}
+.adsets.open{display:block}
+.adset-row{border-top:1px dashed var(--gray-line);padding:5px 0 3px}
+.adset-name{font-size:.75rem;color:var(--gray-text);font-weight:600;margin-bottom:4px}
+.ads-row{display:flex;flex-wrap:wrap;gap:6px;padding:2px 0}
+
+/* AD THUMBNAIL (click to zoom) */
+.ad-thumb img{width:36px;height:36px;object-fit:cover;border-radius:6px;border:1px solid var(--gray-line);cursor:pointer;transition:transform .15s}
+.ad-thumb img:hover{transform:scale(1.08);border-color:var(--ink)}
+.ad-noimg{width:36px;height:36px;border-radius:6px;background:var(--gray-light);border:1px dashed var(--gray-line);display:flex;align-items:center;justify-content:center;font-size:.6rem;color:#ccc}
+
+/* LIGHTBOX MODAL */
+.lightbox-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:1000;align-items:center;justify-content:center}
+.lightbox-overlay.open{display:flex}
+.lightbox-box{background:var(--white);border-radius:14px;padding:16px;max-width:90vw;max-height:90vh;display:flex;flex-direction:column;align-items:center;box-shadow:0 12px 48px rgba(0,0,0,.3)}
+.lightbox-box img{max-width:min(70vw,520px);max-height:65vh;object-fit:contain;border-radius:8px}
+.lightbox-name{margin-top:12px;font-size:.85rem;color:var(--ink);font-weight:600;text-align:center;max-width:480px}
+.lightbox-close{margin-top:14px;background:var(--ink);color:#fff;border:none;border-radius:8px;padding:7px 20px;font-size:.82rem;font-weight:600;cursor:pointer}
+
+/* AI CHAT PANEL */
+.ai-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:900;align-items:flex-start;justify-content:flex-end}
+.ai-overlay.open{display:flex}
+.ai-panel{background:var(--white);width:380px;max-width:92vw;height:100vh;display:flex;flex-direction:column;box-shadow:-8px 0 32px rgba(0,0,0,.18)}
+.ai-head{padding:18px 20px;border-bottom:1px solid var(--gray-line);display:flex;justify-content:space-between;align-items:center}
+.ai-head h3{font-size:1rem;color:var(--ink)}
+.ai-head button{background:none;border:none;font-size:1.2rem;cursor:pointer;color:var(--gray-text)}
+.ai-msgs{flex:1;overflow-y:auto;padding:16px 20px;display:flex;flex-direction:column;gap:12px}
+.ai-msg{max-width:88%;padding:9px 13px;border-radius:10px;font-size:.85rem;line-height:1.4}
+.ai-msg.user{align-self:flex-end;background:var(--ink);color:#fff}
+.ai-msg.bot{align-self:flex-start;background:var(--gray-light);color:var(--ink);white-space:pre-wrap}
+.ai-msg.hint{align-self:flex-start;background:var(--gray-light);color:var(--gray-text);font-size:.78rem}
+.ai-input-row{display:flex;gap:8px;padding:14px 20px;border-top:1px solid var(--gray-line)}
+.ai-input-row input{flex:1;border:1px solid var(--gray-line);border-radius:8px;padding:9px 12px;font-size:.85rem;outline:none}
+.ai-input-row input:focus{border-color:var(--ink)}
+.ai-input-row button{background:var(--ink);color:#fff;border:none;border-radius:8px;padding:9px 16px;font-weight:600;cursor:pointer;font-size:.85rem}
+
+.footer{text-align:center;color:#ccc;font-size:.73rem;padding:28px 0 20px}
+.loading{text-align:center;padding:80px;color:var(--gray-text)}
+</style>
+</head>
+<body>
+<div id="auth-overlay" style="display:none">
+  <div id="auth-box">
+    <h2>🔒 iOznámení Report</h2>
+    <p>Zadej heslo pro přístup</p>
+    <input id="auth-pwd" type="password" placeholder="Heslo…" onkeydown="window._authKey(event)">
+    <button id="auth-btn" onclick="window._authCheck()">Vstoupit</button>
+    <div id="auth-err"></div>
+  </div>
+</div>
+
+<header>
+  <div class="brand">
+    <div class="brand-dot"></div>
+    <h1>i<span>Oznámení</span> / report</h1>
+  </div>
+  <button class="btn-ai" onclick="openAi()">✦ Zeptat se AI</button>
+</header>
+
+<main>
+  <div id="content" class="loading">Načítám data…</div>
+</main>
+
+<!-- LIGHTBOX -->
+<div class="lightbox-overlay" id="lightbox" onclick="if(event.target===this) closeLightbox()">
+  <div class="lightbox-box">
+    <img id="lightboxImg" src="" alt="">
+    <div class="lightbox-name" id="lightboxName"></div>
+    <button class="lightbox-close" onclick="closeLightbox()">Zavřít</button>
+  </div>
+</div>
+
+<!-- AI PANEL -->
+<div class="ai-overlay" id="aiOverlay" onclick="if(event.target===this) closeAi()">
+  <div class="ai-panel">
+    <div class="ai-head">
+      <h3>✦ AI asistent reportu</h3>
+      <button onclick="closeAi()">✕</button>
+    </div>
+    <div class="ai-msgs" id="aiMsgs">
+      <div class="ai-msg hint">Zeptej se třeba: "Jaký byl spend za minulý týden na Google Ads CZ?" nebo "Porovnej Meta CZ a SK za červen"</div>
+    </div>
+    <div class="ai-input-row">
+      <input type="text" id="aiInput" placeholder="Napiš otázku…" onkeydown="if(event.key==='Enter') askAi()">
+      <button onclick="askAi()">Odeslat</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── UTILS ──────────────────────────────────────────────────────────────────
+const f = (v,cur) => v ? v.toLocaleString('cs-CZ',{minimumFractionDigits:0,maximumFractionDigits:0})+' '+(cur||'Kč') : '—';
+const fn = v => v ? v.toLocaleString('cs-CZ') : '—';
+const fpct = (a,b) => b>0 ? (a/b*100).toFixed(2)+'%' : '—';
+const fcpc = (s,n) => n>0 ? (s/n).toFixed(2) : '—';
+
+function pad(n){ return String(n).padStart(2,'0'); }
+function fmtDate(d){ return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; }
+function startOfWeek(d){ const x=new Date(d); const day=(x.getDay()+6)%7; x.setDate(x.getDate()-day); return x; }
+const todayStr = fmtDate(new Date());
+
+const ICONS = {
+  gads: `<svg class="plat-icon" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><rect width="48" height="48" fill="#fff" rx="7"/><path fill="#4285F4" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.08 17.74 9.5 24 9.5z"/><path fill="#EA4335" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.37-.76-2.83-.76-4.59s.27-3.22.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-3.59-13.46-8.83l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>`,
+  meta: `<svg class="plat-icon" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><rect width="48" height="48" fill="#1877F2" rx="7"/><path fill="#fff" d="M28 48V30h6l1-7h-7v-4c0-2 1-3 4-3h3V9s-3-1-6-1c-7 0-11 4-11 12v5h-6v7h6v18z"/></svg>`,
+  sklik:`<svg class="plat-icon" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><rect width="48" height="48" fill="#cc0000" rx="7"/><text x="50%" y="56%" dominant-baseline="middle" text-anchor="middle" fill="white" font-size="20" font-weight="bold" font-family="Arial">SK</text></svg>`,
+};
+const NAMES = {gads:'Google Ads', meta:'Meta Ads', sklik:'Sklik'};
+const COLORS = {gads:'var(--gads)', meta:'var(--meta)', sklik:'var(--sklik)'};
+const COLOR_HEX = {gads:'#FDBA01', meta:'#D61E64', sklik:'#6FA32B'};
+
+// ── GLOBAL FILTER STATE ──────────────────────────────────────────────────────
+const filterState = { market: 'cz', from: null, to: null, period: '7' };
+
+// ── LOAD DATA ──────────────────────────────────────────────────────────────
+let allData = null;
+let metaStructure = null;
+
+async function loadAllData() {
+  if (allData) return allData;
+  try {
+    const r = await fetch(`data/all_data.json?t=${Date.now()}`);
+    if (r.ok) { allData = await r.json(); }
+  } catch(e) {}
+  try {
+    const r2 = await fetch(`data/meta_structure.json?t=${Date.now()}`);
+    if (r2.ok) { metaStructure = await r2.json(); }
+  } catch(e) {}
+  return allData;
+}
+
+function attachMetaStructure(market, campaigns) {
+  const struct = metaStructure?.[market] || [];
+  for (const c of campaigns) {
+    const match = struct.find(s => s.name === c.name);
+    if (match) { c.adsets = match.adsets; c.is_product = match.is_product; }
+  }
+  return campaigns;
+}
+
+// ── AGGREGATE ────────────────────────────────────────────────────────────────
+function aggPlatform(data, market, plat, from, to) {
+  const dst = {spend:0,clicks:0,impressions:0,conversions:0,conversionValue:0,campaigns:{}};
+  for (const [day, d] of Object.entries(data)) {
+    if (day < from || day > to) continue;
+    const src = d[market]?.[plat];
+    if (!src) continue;
+    dst.spend           += src.spend||0;
+    dst.clicks          += src.clicks||0;
+    dst.impressions     += src.impressions||0;
+    dst.conversions     += src.conversions||0;
+    dst.conversionValue += src.conversionValue||0;
+    for (const c of (src.campaigns||[])) {
+      if (!dst.campaigns[c.name]) dst.campaigns[c.name] = {name:c.name,spend:0,clicks:0,impressions:0,conversions:0,conversionValue:0};
+      const dc = dst.campaigns[c.name];
+      dc.spend           += c.spend||0;
+      dc.clicks          += c.clicks||0;
+      dc.impressions      += c.impressions||0;
+      dc.conversions      += c.conversions||0;
+      dc.conversionValue  += c.conversionValue||0;
+    }
+  }
+  dst.spend = Math.round(dst.spend*100)/100;
+  let campArr = Object.values(dst.campaigns).sort((a,b)=>b.spend-a.spend);
+  if (plat === 'meta') campArr = attachMetaStructure(market, campArr);
+  dst.campaigns = campArr;
+  return dst;
+}
+
+function aggOverview(data, market, plats, from, to) {
+  let spend=0, clicks=0, impressions=0, conversions=0, conversionValue=0;
+  for (const [day, d] of Object.entries(data)) {
+    if (day < from || day > to) continue;
+    for (const plat of plats) {
+      const src = d[market]?.[plat];
+      if (!src) continue;
+      spend += src.spend||0; clicks += src.clicks||0;
+      impressions += src.impressions||0; conversions += src.conversions||0;
+      conversionValue += src.conversionValue||0;
+    }
+  }
+  return {spend:Math.round(spend*100)/100, clicks, impressions, conversions, conversionValue:Math.round(conversionValue*100)/100};
+}
+
+// ── LIGHTBOX ───────────────────────────────────────────────────────────────
+function openLightbox(url, name) {
+  document.getElementById('lightboxImg').src = url;
+  document.getElementById('lightboxName').textContent = name || '';
+  document.getElementById('lightbox').classList.add('open');
+}
+function closeLightbox() { document.getElementById('lightbox').classList.remove('open'); }
+
+// ── AD THUMBNAIL (click to zoom) ────────────────────────────────────────────
+function adThumb(ad) {
+  const url = ad.thumbnail_url || ad.image_url;
+  const name = (ad.name||'').replace(/'/g,"&#39;").replace(/"/g,'&quot;');
+  if (!url) return `<div class="ad-noimg" title="${name}">?</div>`;
+  return `<div class="ad-thumb"><img src="${url}" alt="${name}" loading="lazy" onerror="this.parentElement.outerHTML='<div class=&quot;ad-noimg&quot;>?</div>'" onclick="openLightbox('${url}','${name}')"></div>`;
+}
+
+function campRow(c, cur) {
+  const hasSets = c.adsets?.length > 0;
+  const id = 'c'+Math.random().toString(36).slice(2);
+  let adsetsHtml = '';
+  if (hasSets) {
+    adsetsHtml = c.adsets.map(as => {
+      const ads = (as.ads||[]);
+      const thumbsHtml = ads.length ? `<div class="ads-row">${ads.map(ad=>adThumb(ad)).join('')}</div>` : '';
+      return `<div class="adset-row"><div class="adset-name">${as.name}</div>${thumbsHtml}</div>`;
+    }).join('');
+  }
+  const cSpend = Math.round((c.spend||0)*100)/100;
+  const cConvval = c.conversionValue||0;
+  const cPno = cConvval>0 ? (cSpend/cConvval*100).toFixed(1)+'%' : '—';
+  return `
+    <div class="camp-row">
+      <div class="camp-row-header" onclick="toggleAdsets('${id}')">
+        <span class="camp-row-name" title="${c.name}">${c.name}${c.is_product?' 🛒':''}</span>
+        <span class="camp-row-nums">
+          <span>${f(cSpend, cur)}</span>
+          ${cConvval>0?`<span style="color:var(--green-dark,#4a7a20)">${f(cConvval,cur)}</span><span style="color:var(--ink);opacity:.7">${cPno}</span>`:`<span>${fn(c.clicks)} kl</span>`}
+        </span>
+      </div>
+      ${hasSets ? `<div class="adsets" id="${id}">${adsetsHtml}</div>` : ''}
+    </div>`;
+}
+
+// ── PLATFORM CARD ────────────────────────────────────────────────────────────
+function renderCardBody(stats, cur) {
+  const hasData = stats && (stats.spend>0 || stats.clicks>0);
+  const camps = stats?.campaigns || [];
+  const cid = 'camps'+Math.random().toString(36).slice(2);
+  const campsHtml = camps.length ? `
+    <div class="camp-toggle" onclick="toggleEl('${cid}',this)">▸ ${camps.length} kampaní</div>
+    <div class="camp-list" id="${cid}">${camps.map(c=>campRow(c,cur)).join('')}</div>` : '';
+
+  const convval = stats.conversionValue||0;
+  const pno = convval>0 ? (stats.spend/convval*100).toFixed(2)+' %' : '—';
+  if (!hasData) return `<div class="no-data">Bez aktivity ve zvoleném období</div>`;
+  return `
+    <div class="metrics">
+      <div class="metric"><div class="metric-l">Spend</div><div class="metric-v">${f(stats.spend,cur)}</div></div>
+      <div class="metric"><div class="metric-l">Hodnota konverze</div><div class="metric-v" style="color:var(--pink)">${convval>0?f(convval,cur):'—'}</div></div>
+      <div class="metric"><div class="metric-l">PNO</div><div class="metric-v" style="color:var(--gold)">${pno}</div></div>
+      <div class="metric"><div class="metric-l">Kliky</div><div class="metric-v">${fn(stats.clicks)}</div></div>
+      <div class="metric"><div class="metric-l">Zobrazení</div><div class="metric-v">${fn(stats.impressions)}</div></div>
+      <div class="metric"><div class="metric-l">Konverze</div><div class="metric-v">${fn(Math.round(stats.conversions||0))}</div></div>
+    </div>
+    <div class="kpi">
+      <span>CTR <strong>${fpct(stats.clicks,stats.impressions)}</strong></span>
+      <span>CPC <strong>${fcpc(stats.spend,stats.clicks)} ${cur}</strong></span>
+      ${(stats.conversions||0)>0?`<span>CPA <strong>${fcpc(stats.spend,stats.conversions)} ${cur}</strong></span>`:''}
+    </div>
+    ${campsHtml}`;
+}
+
+function platCardShell(market, key, cur) {
+  const cardId = `card-${market}-${key}`;
+  return `
+    <div class="card" id="${cardId}" data-market="${market}" data-plat="${key}" data-cur="${cur}">
+      <div class="card-header">
+        ${ICONS[key]}
+        <span class="plat-name">${NAMES[key]}</span>
+        <span class="plat-badge" id="${cardId}-badge"></span>
+      </div>
+      <div class="card-body" id="${cardId}-body">…</div>
+    </div>`;
+}
+
+function refreshCard(market, plat, from, to) {
+  const cardId = `card-${market}-${plat}`;
+  const cardEl = document.getElementById(cardId);
+  if (!cardEl) return;
+  const cur  = cardEl.dataset.cur;
+  const stats = aggPlatform(allData, market, plat, from, to);
+  const hasData = stats.spend>0 || stats.clicks>0;
+  document.getElementById(`${cardId}-badge`).className = 'plat-badge ' + (hasData?'b-ok':'b-empty');
+  document.getElementById(`${cardId}-badge`).textContent = hasData?'aktivní':'bez dat';
+  document.getElementById(`${cardId}-body`).innerHTML = renderCardBody(stats, cur);
+}
+
+// ── KPI BLOCK (Spend / Hodnota konverze / PNO) ──────────────────────────────
+function kpiBlockHtml(market, label, cur, from, to) {
+  const plats = market==='cz' ? ['gads','sklik','meta'] : ['gads','meta'];
+  const stats = aggOverview(allData, market, plats, from, to);
+  const pno = stats.conversionValue>0 ? (stats.spend/stats.conversionValue*100).toFixed(2)+' %' : '—';
+  return `
+    <div class="market-block">
+      ${label ? `<div class="market-block-title">${label}</div>` : ''}
+      <div class="kpi-row">
+        <div class="kpi-box"><div class="l">Spend</div><div class="v">${f(stats.spend,cur)}</div></div>
+        <div class="kpi-box"><div class="l">Hodnota konverze</div><div class="v">${f(stats.conversionValue,cur)}</div></div>
+        <div class="kpi-box"><div class="l">PNO</div><div class="v">${pno}</div></div>
+      </div>
+    </div>`;
+}
+
+// ── CHANNEL BREAKDOWN: BAR + DONUT ──────────────────────────────────────────
+function channelStats(market, from, to) {
+  const plats = market==='cz' ? ['gads','sklik','meta'] : ['gads','meta'];
+  return plats.map(p => ({plat:p, stats: aggPlatform(allData, market, p, from, to)}));
+}
+
+function barChartHtml(byPlat, cur) {
+  const maxSpend = Math.max(1, ...byPlat.map(x=>x.stats.spend));
+  const cols = byPlat.map(({plat,stats}) => {
+    const h = Math.max(2, Math.round((stats.spend/maxSpend)*150));
+    return `
+      <div class="bar-col">
+        <div class="bar-val">${f(stats.spend,cur)}</div>
+        <div class="bar-rect" style="height:${h}px;background:${COLOR_HEX[plat]}"></div>
+        <div class="bar-name">${NAMES[plat]}</div>
+      </div>`;
+  }).join('');
+  return `<div class="bar-chart">${cols}</div>`;
+}
+
+function donutSVG(parts) {
+  const total = parts.reduce((s,p)=>s+p.value,0);
+  const cx=70, cy=70, rOuter=68, rInner=42;
+  if (!total) return `<svg width="140" height="140" viewBox="0 0 140 140"><circle cx="${cx}" cy="${cy}" r="${rOuter}" fill="#F0F0F2"/><circle cx="${cx}" cy="${cy}" r="${rInner}" fill="#fff"/></svg>`;
+  const polar = (r,deg) => { const a=(deg-90)*Math.PI/180; return [cx+r*Math.cos(a), cy+r*Math.sin(a)]; };
+  let angle = 0, paths = '';
+  for (const p of parts) {
+    if (p.value<=0) continue;
+    const slice = (p.value/total)*360;
+    const [x1,y1] = polar(rOuter,angle), [x2,y2] = polar(rOuter,angle+slice);
+    const [ix2,iy2] = polar(rInner,angle+slice), [ix1,iy1] = polar(rInner,angle);
+    const largeArc = slice>180?1:0;
+    paths += `<path d="M${x1.toFixed(2)},${y1.toFixed(2)} A${rOuter},${rOuter} 0 ${largeArc} 1 ${x2.toFixed(2)},${y2.toFixed(2)} L${ix2.toFixed(2)},${iy2.toFixed(2)} A${rInner},${rInner} 0 ${largeArc} 0 ${ix1.toFixed(2)},${iy1.toFixed(2)} Z" fill="${p.color}"/>`;
+    angle += slice;
+  }
+  return `<svg width="140" height="140" viewBox="0 0 140 140">${paths}</svg>`;
+}
+
+function donutCardHtml(byPlat) {
+  const total = byPlat.reduce((s,x)=>s+x.stats.spend,0);
+  const parts = byPlat.map(({plat,stats}) => ({label:NAMES[plat], value:stats.spend, color:COLOR_HEX[plat]}));
+  const legend = parts.map(p => `
+    <div class="donut-legend-row">
+      <span class="donut-dot" style="background:${p.color}"></span>
+      <span>${p.label}</span>
+      <span class="pct">${total>0 ? (p.value/total*100).toFixed(0)+'%' : '—'}</span>
+    </div>`).join('');
+  return `
+    <div class="donut-wrap">
+      ${donutSVG(parts)}
+      <div class="donut-legend">${legend}</div>
+    </div>`;
+}
+
+function channelTableHtml(byPlat, cur) {
+  const rows = byPlat.filter(x => x.stats.spend > 0 || x.stats.clicks > 0).map(({plat, stats}) => {
+    const convval = stats.conversionValue||0;
+    const pno = convval>0 ? (stats.spend/convval*100).toFixed(2)+' %' : '—';
+    return `<tr>
+      <td style="display:flex;align-items:center;gap:6px;padding:8px 4px">
+        <span style="width:10px;height:10px;border-radius:50%;background:${COLOR_HEX[plat]};display:inline-block;flex-shrink:0"></span>
+        <strong>${NAMES[plat]}</strong>
+      </td>
+      <td style="padding:8px 8px;text-align:right">${f(stats.spend,cur)}</td>
+      <td style="padding:8px 8px;text-align:right;color:var(--pink);font-weight:600">${convval>0?f(convval,cur):'—'}</td>
+      <td style="padding:8px 8px;text-align:right;color:var(--gold);font-weight:600">${pno}</td>
+      <td style="padding:8px 8px;text-align:right">${fn(Math.round(stats.conversions||0))}</td>
+    </tr>`;
+  }).join('');
+  if (!rows) return '';
+  return `<table style="width:100%;border-collapse:collapse;font-size:.82rem;margin-top:12px">
+    <thead><tr style="border-bottom:2px solid var(--gold)">
+      <th style="text-align:left;padding:6px 4px;color:var(--ink);opacity:.6;font-weight:600">Kanál</th>
+      <th style="text-align:right;padding:6px 8px;color:var(--ink);opacity:.6;font-weight:600">Spend</th>
+      <th style="text-align:right;padding:6px 8px;color:var(--ink);opacity:.6;font-weight:600">Hodn. konverze</th>
+      <th style="text-align:right;padding:6px 8px;color:var(--ink);opacity:.6;font-weight:600">PNO</th>
+      <th style="text-align:right;padding:6px 8px;color:var(--ink);opacity:.6;font-weight:600">Konverze</th>
+    </tr></thead>
+    <tbody>${rows}</tbody>
+  </table>`;
+}
+
+function channelsSectionHtml(market, cur, from, to) {
+  const byPlat = channelStats(market, from, to);
+  return `
+    <div class="section-title">Rozpad po kanálech</div>
+    <div class="channels-grid">
+      <div class="chart-card">
+        <div class="chart-card-title">Spend po kanálech</div>
+        ${barChartHtml(byPlat, cur)}
+      </div>
+      <div class="chart-card">
+        <div class="chart-card-title">Podíl spendu</div>
+        ${donutCardHtml(byPlat)}
+      </div>
+    </div>
+    <div class="chart-card" style="margin-top:14px">${channelTableHtml(byPlat, cur)}</div>`;
+}
+
+// ── FULL MARKET SECTION (kpis + channels + platform cards) ─────────────────
+function marketSectionHtml(market, label, cur, from, to) {
+  const plats = market==='cz' ? ['gads','sklik','meta'] : ['gads','meta'];
+  return `
+    ${kpiBlockHtml(market, label, cur, from, to)}
+    ${channelsSectionHtml(market, cur, from, to)}
+    <div class="section-title">Detail kanálů</div>
+    <div class="platform-grid">
+      ${plats.map(p => platCardShell(market,p,cur)).join('')}
+    </div>`;
+}
+
+function refreshMarketSection(market, from, to) {
+  const plats = market==='cz' ? ['gads','sklik','meta'] : ['gads','meta'];
+  plats.forEach(p => refreshCard(market, p, from, to));
+}
+
+// ── TOGGLE HELPERS ─────────────────────────────────────────────────────────
+function toggleEl(id, btn) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.classList.toggle('open');
+  btn.textContent = (el.classList.contains('open') ? '▾' : '▸') + btn.textContent.slice(1);
+}
+function toggleAdsets(id) { document.getElementById(id)?.classList.toggle('open'); }
+
+// ── DATE PRESETS ─────────────────────────────────────────────────────────────
+function periodToRange(period) {
+  const today = new Date();
+  if (period === '7') { const d=new Date(today); d.setDate(d.getDate()-7); return [fmtDate(d), todayStr]; }
+  if (period === '14') { const d=new Date(today); d.setDate(d.getDate()-14); return [fmtDate(d), todayStr]; }
+  if (period === 'lastweek') {
+    const thisMon = startOfWeek(today);
+    const lastMon = new Date(thisMon); lastMon.setDate(lastMon.getDate()-7);
+    const lastSun = new Date(thisMon); lastSun.setDate(lastSun.getDate()-1);
+    return [fmtDate(lastMon), fmtDate(lastSun)];
+  }
+  if (period === 'lastmonth') {
+    const f = new Date(today.getFullYear(), today.getMonth()-1, 1);
+    const t = new Date(today.getFullYear(), today.getMonth(), 0);
+    return [fmtDate(f), fmtDate(t)];
+  }
+  const d = new Date(today); d.setDate(d.getDate()-7);
+  return [fmtDate(d), todayStr];
+}
+
+function setPeriod(period) {
+  filterState.period = period;
+  const [from, to] = periodToRange(period);
+  filterState.from = from; filterState.to = to;
+  document.getElementById('filterFrom').value = from;
+  document.getElementById('filterTo').value = to;
+  document.querySelectorAll('#periodPills .pill').forEach(b => b.classList.toggle('active', b.dataset.period===period));
+  renderContent();
+}
+
+function setMarket(market) {
+  filterState.market = market;
+  document.querySelectorAll('#marketPills .pill').forEach(b => b.classList.toggle('active', b.dataset.market===market));
+  renderContent();
+}
+
+function setCustomRange() {
+  filterState.from = document.getElementById('filterFrom').value;
+  filterState.to   = document.getElementById('filterTo').value;
+  document.querySelectorAll('#periodPills .pill').forEach(b => b.classList.remove('active'));
+  renderContent();
+}
+
+// ── AI PANEL ───────────────────────────────────────────────────────────────
+function openAi(){ document.getElementById('aiOverlay').classList.add('open'); document.getElementById('aiInput').focus(); }
+function closeAi(){ document.getElementById('aiOverlay').classList.remove('open'); }
+
+function addAiMsg(text, cls) {
+  const box = document.getElementById('aiMsgs');
+  const div = document.createElement('div');
+  div.className = 'ai-msg ' + cls;
+  div.textContent = text;
+  box.appendChild(div);
+  box.scrollTop = box.scrollHeight;
+  return div;
+}
+
+// ── LOCAL QUERY PARSER (no API key needed) ──────────────────────────────────
+const PLAT_KEYWORDS = {
+  gads: ['googl','gads','adwords'],
+  meta: ['met','facebook','fb','instagram','ig'],
+  sklik: ['sklik','seznam'],
+};
+const MARKET_KEYWORDS = { cz: ['cz','česk','čr','czech'], sk: ['sk','slovens','slovak'] };
+const METRIC_KEYWORDS = {
+  clicks: ['klik','click'],
+  impressions: ['zobrazen','imprese','impression'],
+  conversions: ['konverz','conversion'],
+  ctr: ['ctr'],
+  cpc: ['cpc'],
+  spend: ['spend','náklad','utrat','kolik','cena','peníze','penize'],
+};
+const MONTHS = ['leden','unor','brezen','duben','kveten','cerven','cervenec','srpen','zari','rijen','listopad','prosinec'];
+const MONTH_NUM = {leden:1,unor:2,brezen:3,duben:4,kveten:5,cerven:6,cervenec:7,srpen:8,zari:9,rijen:10,listopad:11,prosinec:12};
+
+function stripDia(s){ return s.normalize('NFD').replace(/[̀-ͯ]/g,''); }
+
+function parseDateRange(qRaw) {
+  const q = stripDia(qRaw);
+  const today = new Date();
+  if (/\bdnes\b/.test(q)) return [fmtDate(today), fmtDate(today)];
+  if (/\bvcera\b/.test(q)) { const d=new Date(today); d.setDate(d.getDate()-1); return [fmtDate(d),fmtDate(d)]; }
+  const nDays = q.match(/posledn\w*\s+(\d+)\s*d/);
+  if (nDays) { const n=parseInt(nDays[1]); const d=new Date(today); d.setDate(d.getDate()-n); return [fmtDate(d), fmtDate(today)]; }
+  if (/minul\w*\s+tyd\w*/.test(q)) {
+    const thisMon = startOfWeek(today);
+    const lastMon = new Date(thisMon); lastMon.setDate(lastMon.getDate()-7);
+    const lastSun = new Date(thisMon); lastSun.setDate(lastSun.getDate()-1);
+    return [fmtDate(lastMon), fmtDate(lastSun)];
+  }
+  if (/tento\s+tyd\w*|tomto\s+tyd\w*/.test(q)) return [fmtDate(startOfWeek(today)), fmtDate(today)];
+  if (/minul\w*\s+mesic\w*/.test(q)) {
+    const f = new Date(today.getFullYear(), today.getMonth()-1, 1);
+    const t = new Date(today.getFullYear(), today.getMonth(), 0);
+    return [fmtDate(f), fmtDate(t)];
+  }
+  if (/tento\s+mesic\w*|tomto\s+mesic\w*/.test(q)) return [fmtDate(new Date(today.getFullYear(), today.getMonth(), 1)), fmtDate(today)];
+  for (const m of MONTHS) {
+    if (q.includes(m)) {
+      const num = MONTH_NUM[m];
+      const yMatch = q.match(/20\d{2}/);
+      const y = yMatch ? parseInt(yMatch[0]) : today.getFullYear();
+      const f = new Date(y, num-1, 1);
+      const t = new Date(y, num, 0);
+      return [fmtDate(f), fmtDate(t)];
+    }
+  }
+  const explicit = q.match(/(\d{4}-\d{2}-\d{2}).{1,5}(\d{4}-\d{2}-\d{2})/);
+  if (explicit) return [explicit[1], explicit[2]];
+  const d = new Date(today); d.setDate(d.getDate()-7);
+  return [fmtDate(d), fmtDate(today)];
+}
+
+function detectKeywords(qRaw, dict) {
+  const q = stripDia(qRaw);
+  const found = [];
+  for (const [key, words] of Object.entries(dict)) {
+    if (words.some(w => new RegExp('\\b'+stripDia(w)+'\\w*','i').test(q))) found.push(key);
+  }
+  return found;
+}
+
+function metricLabel(m){ return {spend:'spend',clicks:'kliky',impressions:'zobrazení',conversions:'konverze',ctr:'CTR',cpc:'CPC'}[m]; }
+
+function computeMetric(stats, metric, cur) {
+  if (metric==='clicks') return fn(stats.clicks);
+  if (metric==='impressions') return fn(stats.impressions);
+  if (metric==='conversions') return fn(Math.round(stats.conversions||0));
+  if (metric==='ctr') return fpct(stats.clicks, stats.impressions);
+  if (metric==='cpc') return fcpc(stats.spend, stats.clicks) + ' ' + cur;
+  return f(stats.spend, cur);
+}
+
+function answerQuestion(q) {
+  const ql = q.toLowerCase();
+  let plats = detectKeywords(ql, PLAT_KEYWORDS);
+  let markets = detectKeywords(ql, MARKET_KEYWORDS);
+  let metrics = detectKeywords(ql, METRIC_KEYWORDS);
+  const [from, to] = parseDateRange(ql);
+  const metric = metrics[0] || 'spend';
+
+  if (!markets.length) markets = ['cz','sk'];
+  if (!plats.length) plats = null;
+
+  const fromFmt = new Date(from+'T12:00:00').toLocaleDateString('cs-CZ');
+  const toFmt   = new Date(to+'T12:00:00').toLocaleDateString('cs-CZ');
+  const lines = [`Období: ${fromFmt} – ${toFmt}`];
+
+  for (const market of markets) {
+    const cur = market==='cz' ? 'Kč' : '€';
+    const availPlats = market==='cz' ? ['gads','sklik','meta'] : ['gads','meta'];
+    const usePlats = plats ? plats.filter(p=>availPlats.includes(p)) : availPlats;
+    if (plats && !usePlats.length) continue;
+
+    if (!plats) {
+      const stats = aggOverview(allData, market, availPlats, from, to);
+      lines.push(`${market.toUpperCase()} celkem (vše): ${metricLabel(metric)} = ${computeMetric(stats, metric, cur)}`);
+    } else {
+      for (const p of usePlats) {
+        const stats = aggPlatform(allData, market, p, from, to);
+        const isEmptyGads = p==='gads' && stats.spend===0 && stats.clicks===0 && stats.impressions===0;
+        const note = isEmptyGads ? ' (Google Ads ještě nemá data — čeká se na schválení API)' : '';
+        lines.push(`${market.toUpperCase()} – ${NAMES[p]}: ${metricLabel(metric)} = ${computeMetric(stats, metric, cur)}${note}`);
+      }
+    }
+  }
+  return lines.join('\n');
+}
+
+function askAi() {
+  const input = document.getElementById('aiInput');
+  const q = input.value.trim();
+  if (!q) return;
+  input.value = '';
+  addAiMsg(q, 'user');
+  try {
+    const answer = answerQuestion(q);
+    addAiMsg(answer, 'bot');
+  } catch(e) {
+    addAiMsg('Nerozuměla jsem otázce — zkus zmínit platformu (Google/Meta/Sklik), zemi (CZ/SK) a období (např. "minulý týden").', 'bot');
+  }
+}
+
+// ── MAIN RENDER ────────────────────────────────────────────────────────────
+function renderContent() {
+  const { market, from, to } = filterState;
+
+  let body = '';
+  if (market === 'czsk') {
+    body = marketSectionHtml('cz', 'Česká republika', 'Kč', from, to)
+         + marketSectionHtml('sk', 'Slovensko', '€', from, to);
+  } else {
+    const cur = market==='cz' ? 'Kč' : '€';
+    body = marketSectionHtml(market, null, cur, from, to);
+  }
+
+  const fromFmt = new Date(from+'T12:00:00').toLocaleDateString('cs-CZ');
+  const toFmt   = new Date(to+'T12:00:00').toLocaleDateString('cs-CZ');
+
+  document.getElementById('content').innerHTML = `
+    <div class="filterbar">
+      <div class="filter-group">
+        <span class="filter-label">Trh</span>
+        <div class="pill-group" id="marketPills">
+          <button class="pill ${market==='cz'?'active':''}" data-market="cz" onclick="setMarket('cz')">CZ</button>
+          <button class="pill ${market==='sk'?'active':''}" data-market="sk" onclick="setMarket('sk')">SK</button>
+          <button class="pill ${market==='czsk'?'active':''}" data-market="czsk" onclick="setMarket('czsk')">CZ+SK</button>
+        </div>
+      </div>
+      <div class="filter-group">
+        <span class="filter-label">Období</span>
+        <div class="pill-group" id="periodPills">
+          <button class="pill ${filterState.period==='7'?'active':''}" data-period="7" onclick="setPeriod('7')">7 dní</button>
+          <button class="pill ${filterState.period==='14'?'active':''}" data-period="14" onclick="setPeriod('14')">14 dní</button>
+          <button class="pill ${filterState.period==='lastweek'?'active':''}" data-period="lastweek" onclick="setPeriod('lastweek')">Minulý týden</button>
+          <button class="pill ${filterState.period==='lastmonth'?'active':''}" data-period="lastmonth" onclick="setPeriod('lastmonth')">Minulý měsíc</button>
+        </div>
+      </div>
+      <div class="filter-group">
+        <span class="filter-label">Vlastní rozsah</span>
+        <div class="range-row">
+          <input type="date" id="filterFrom" value="${from}" onchange="setCustomRange()">
+          <span class="sep">–</span>
+          <input type="date" id="filterTo" value="${to}" onchange="setCustomRange()">
+        </div>
+      </div>
+    </div>
+    ${body}
+    <div class="footer">Data ${fromFmt} – ${toFmt} · obnovuje se každých 5 min</div>`;
+
+  if (market === 'czsk') {
+    refreshMarketSection('cz', from, to);
+    refreshMarketSection('sk', from, to);
+  } else {
+    refreshMarketSection(market, from, to);
+  }
+}
+
+async function render() {
+  document.getElementById('content').innerHTML = '<div class="loading">Načítám…</div>';
+  const data = await loadAllData();
+  if (!data || !Object.keys(data).length) {
+    document.getElementById('content').innerHTML = '<div class="no-data" style="padding:60px">⚠ Žádná data</div>';
+    return;
+  }
+  const [from, to] = periodToRange('7');
+  filterState.from = from; filterState.to = to;
+  renderContent();
+}
+
+render();
+setInterval(() => { allData = null; metaStructure = null; render(); }, 5*60*1000);
+</script>
+</body>
+</html>
