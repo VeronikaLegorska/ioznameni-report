@@ -3,3 +3,4 @@ fetch_data.py
 .claude/
 *.pyc
 __pycache__/
+data/all_data.json

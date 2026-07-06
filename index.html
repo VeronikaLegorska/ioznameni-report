@@ -30,30 +30,54 @@
 #auth-err { margin-top:12px;color:#D61E64;font-size:13px;min-height:18px; }
 </style>
 <script>
-(function(){
-  const HASH = "527c149a88be012d87fb85297464e7fc59bbc012f7b74174769082c95e78e320";
-  if (sessionStorage.getItem("ioz_auth") === HASH) return;
-  document.addEventListener("DOMContentLoaded", function(){
-    var overlay = document.getElementById("auth-overlay");
-    if (overlay) overlay.style.display = "flex";
+// Desifrovani AES-256-GCM (PBKDF2 klic z hesla)
+async function _deriveKey(password, salt) {
+  const km = await crypto.subtle.importKey("raw", new TextEncoder().encode(password),
+    "PBKDF2", false, ["deriveKey"]);
+  return crypto.subtle.deriveKey(
+    {name:"PBKDF2", salt, iterations:100000, hash:"SHA-256"},
+    km, {name:"AES-GCM", length:256}, false, ["decrypt"]);
+}
+async function decryptBlob(b64, password) {
+  const raw = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
+  const salt = raw.slice(0, 16), nonce = raw.slice(16, 28), ct = raw.slice(28);
+  const key = await _deriveKey(password, salt);
+  const dec = await crypto.subtle.decrypt({name:"AES-GCM", iv:nonce}, key, ct);
+  return JSON.parse(new TextDecoder().decode(dec));
+}
+
+let _decryptedData = null;
+let _encBlob = null;
+
+// Nacteme zasifrovana data ihned (ale nezobrazime)
+fetch(`data/all_data.enc?t=${Date.now()}`).then(r => r.text()).then(t => { _encBlob = t; });
+
+document.addEventListener("DOMContentLoaded", function(){
+  document.getElementById("auth-overlay").style.display = "flex";
+  document.getElementById("auth-pwd").focus();
+});
+
+async function _authCheck() {
+  const pwd = document.getElementById("auth-pwd").value;
+  const btn = document.getElementById("auth-btn");
+  const err = document.getElementById("auth-err");
+  if (!pwd) return;
+  btn.textContent = "Dešifruji…"; btn.disabled = true;
+  try {
+    if (!_encBlob) _encBlob = await fetch(`data/all_data.enc?t=${Date.now()}`).then(r => r.text());
+    _decryptedData = await decryptBlob(_encBlob, pwd);
+    sessionStorage.setItem("ioz_pwd", pwd);
+    document.getElementById("auth-overlay").style.display = "none";
+    if (window._initDashboard) window._initDashboard(_decryptedData);
+  } catch(e) {
+    err.textContent = "Špatné heslo, zkus znovu.";
+    document.getElementById("auth-pwd").value = "";
     document.getElementById("auth-pwd").focus();
-  });
-  async function check() {
-    var pwd = document.getElementById("auth-pwd").value;
-    var buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(pwd));
-    var hex = Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,"0")).join("");
-    if (hex === HASH) {
-      sessionStorage.setItem("ioz_auth", HASH);
-      document.getElementById("auth-overlay").style.display = "none";
-    } else {
-      document.getElementById("auth-err").textContent = "Špatné heslo, zkus znovu.";
-      document.getElementById("auth-pwd").value = "";
-      document.getElementById("auth-pwd").focus();
-    }
+    btn.textContent = "Vstoupit"; btn.disabled = false;
   }
-  window._authCheck = check;
-  window._authKey = function(e){ if(e.key==="Enter") check(); };
-})();
+}
+window._authCheck = _authCheck;
+window._authKey = function(e){ if(e.key==="Enter") _authCheck(); };
 </script>
 <style>
 :root {
@@ -277,16 +301,21 @@ let metaStructure = null;
 
 async function loadAllData() {
   if (allData) return allData;
-  try {
-    const r = await fetch(`data/all_data.json?t=${Date.now()}`);
-    if (r.ok) { allData = await r.json(); }
-  } catch(e) {}
+  // Data jsou uz desifrovana v _decryptedData (po uspesnem loginu)
+  if (window._decryptedData) { allData = window._decryptedData; }
   try {
     const r2 = await fetch(`data/meta_structure.json?t=${Date.now()}`);
     if (r2.ok) { metaStructure = await r2.json(); }
   } catch(e) {}
   return allData;
 }
+
+// Zavolano po uspesnem desifraci — spusti dashboard
+window._initDashboard = function(data) {
+  window._decryptedData = data;
+  allData = data;
+  if (window._renderMain) window._renderMain();
+};
 
 function attachMetaStructure(market, campaigns) {
   const struct = metaStructure?.[market] || [];
@@ -829,8 +858,10 @@ async function render() {
   renderContent();
 }
 
-render();
-setInterval(() => { allData = null; metaStructure = null; render(); }, 5*60*1000);
+// render() se spusti az po desifraci (_initDashboard -> _renderMain)
+window._renderMain = render;
+// Auto-refresh kazdych 5 minut (jen kdyz uz jsou data)
+setInterval(() => { if (allData) { allData = null; metaStructure = null; render(); } }, 5*60*1000);
 </script>
 </body>
 </html>
