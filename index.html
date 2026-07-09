@@ -370,6 +370,27 @@ function aggPlatform(data, market, plat, from, to) {
   return dst;
 }
 
+// Kombinovaná agregace CZ+SK pro danou platformu
+function aggPlatformCombined(data, plat, from, to) {
+  const markets = plat === 'sklik' ? ['cz'] : ['cz', 'sk'];
+  const dst = {spend:0,clicks:0,impressions:0,conversions:0,conversionValue:0,campaigns:{}};
+  for (const m of markets) {
+    const s = aggPlatform(data, m, plat, from, to);
+    dst.spend += s.spend; dst.clicks += s.clicks; dst.impressions += s.impressions;
+    dst.conversions += s.conversions; dst.conversionValue += s.conversionValue;
+    for (const c of s.campaigns) {
+      if (!dst.campaigns[c.name]) dst.campaigns[c.name] = {name:c.name,spend:0,clicks:0,impressions:0,conversions:0,conversionValue:0};
+      const dc = dst.campaigns[c.name];
+      dc.spend += c.spend||0; dc.clicks += c.clicks||0; dc.impressions += c.impressions||0;
+      dc.conversions += c.conversions||0; dc.conversionValue += c.conversionValue||0;
+    }
+  }
+  dst.spend = Math.round(dst.spend*100)/100;
+  dst.conversionValue = Math.round(dst.conversionValue*100)/100;
+  dst.campaigns = Object.values(dst.campaigns).sort((a,b)=>b.spend-a.spend);
+  return dst;
+}
+
 function aggOverview(data, market, plats, from, to) {
   let spend=0, clicks=0, impressions=0, conversions=0, conversionValue=0;
   for (const [day, d] of Object.entries(data)) {
@@ -413,6 +434,7 @@ function campRow(c, cur, totalSpend, accentColor) {
   const pnoTxt = cConvval > 0 ? (cSpend/cConvval*100).toFixed(1)+'%' : '—';
   const convvalTxt = cConvval > 0 ? f(cConvval, cur) : `<span class="camp-zero">${fn(cClicks)} kl</span>`;
   const convsTxt = cConvs > 0 ? (Number.isInteger(cConvs) ? cConvs : cConvs.toFixed(1)) : `<span class="camp-zero">—</span>`;
+  const aov = (cConvs > 0 && cConvval > 0) ? f(Math.round(cConvval/cConvs), cur) : `<span class="camp-zero">—</span>`;
   return `<tr>
     <td>
       <div class="camp-name-wrap">
@@ -424,6 +446,7 @@ function campRow(c, cur, totalSpend, accentColor) {
     <td>${convvalTxt}</td>
     <td class="${pnoCls}">${pnoTxt}</td>
     <td>${convsTxt}</td>
+    <td>${aov}</td>
   </tr>`;
 }
 
@@ -452,7 +475,7 @@ function renderChanBody(stats, cur, platKey) {
     <table class="camp-tbl" style="margin-top:10px">
       <thead><tr>
         <th style="text-align:left">Kampaň</th>
-        <th>Spend</th><th>Hodn. konv.</th><th>PNO</th><th>Konv.</th>
+        <th>Spend</th><th>Hodn. konv.</th><th>PNO</th><th>Konv.</th><th>Prům. obj.</th>
       </tr></thead>
       <tbody>${camps.map(c => campRow(c, cur, totalSpend, accent)).join('')}</tbody>
     </table>
@@ -544,7 +567,9 @@ function donutCardHtml(byPlat) {
 function channelTableHtml(byPlat, cur) {
   const rows = byPlat.filter(x => x.stats.spend > 0 || x.stats.clicks > 0).map(({plat, stats}) => {
     const convval = stats.conversionValue||0;
+    const convs = stats.conversions||0;
     const pno = convval>0 ? (stats.spend/convval*100).toFixed(2)+' %' : '—';
+    const aov = (convs>0 && convval>0) ? f(Math.round(convval/convs), cur) : '—';
     return `<tr>
       <td style="display:flex;align-items:center;gap:6px;padding:8px 4px">
         <span style="width:10px;height:10px;border-radius:50%;background:${COLOR_HEX[plat]};display:inline-block;flex-shrink:0"></span>
@@ -553,7 +578,8 @@ function channelTableHtml(byPlat, cur) {
       <td style="padding:8px 8px;text-align:right">${f(stats.spend,cur)}</td>
       <td style="padding:8px 8px;text-align:right;color:var(--pink);font-weight:600">${convval>0?f(convval,cur):'—'}</td>
       <td style="padding:8px 8px;text-align:right;color:var(--gold);font-weight:600">${pno}</td>
-      <td style="padding:8px 8px;text-align:right">${fn(Math.round(stats.conversions||0))}</td>
+      <td style="padding:8px 8px;text-align:right">${fn(Math.round(convs))}</td>
+      <td style="padding:8px 8px;text-align:right;font-weight:600">${aov}</td>
     </tr>`;
   }).join('');
   if (!rows) return '';
@@ -564,13 +590,13 @@ function channelTableHtml(byPlat, cur) {
       <th style="text-align:right;padding:6px 8px;color:var(--ink);opacity:.6;font-weight:600">Hodn. konverze</th>
       <th style="text-align:right;padding:6px 8px;color:var(--ink);opacity:.6;font-weight:600">PNO</th>
       <th style="text-align:right;padding:6px 8px;color:var(--ink);opacity:.6;font-weight:600">Konverze</th>
+      <th style="text-align:right;padding:6px 8px;color:var(--ink);opacity:.6;font-weight:600">Prům. obj.</th>
     </tr></thead>
     <tbody>${rows}</tbody>
   </table>`;
 }
 
-function channelsSectionHtml(market, cur, from, to) {
-  const byPlat = channelStats(market, from, to);
+function channelsSectionHtml(byPlat, cur) {
   return `
     <div class="section-title">Rozpad po kanálech</div>
     <div class="channels-grid">
@@ -589,11 +615,37 @@ function channelsSectionHtml(market, cur, from, to) {
 // ── FULL MARKET SECTION (kpis + channels + campaign tables) ─────────────────
 function marketSectionHtml(market, label, cur, from, to) {
   const plats = market==='cz' ? ['gads','sklik','meta'] : ['gads','meta'];
+  const byPlat = plats.map(p => ({plat:p, stats:aggPlatform(allData, market, p, from, to)}));
   return `
     ${kpiBlockHtml(market, label, cur, from, to)}
-    ${channelsSectionHtml(market, cur, from, to)}
+    ${channelsSectionHtml(byPlat, cur)}
     <div class="section-title">Kampaně</div>
     ${plats.map(p => chanBlockShell(market, p, cur)).join('')}`;
+}
+
+// ── CZ+SK COMBINED SECTION ────────────────────────────────────────────────────
+function czskSectionHtml(from, to) {
+  const allPlats = ['gads','sklik','meta'];
+  const byPlat = allPlats.map(p => ({plat:p, stats:aggPlatformCombined(allData, p, from, to)}));
+  const totals = byPlat.reduce((acc,x) => ({
+    spend: acc.spend + x.stats.spend,
+    conversionValue: acc.conversionValue + x.stats.conversionValue,
+    conversions: acc.conversions + x.stats.conversions
+  }), {spend:0, conversionValue:0, conversions:0});
+  const pno = totals.conversionValue > 0 ? (totals.spend/totals.conversionValue*100).toFixed(2)+' %' : '—';
+  return `
+    <div class="market-block">
+      <div class="kpi-row">
+        <div class="kpi-box"><div class="l">Spend</div><div class="v">${f(totals.spend,'Kč')}</div></div>
+        <div class="kpi-box"><div class="l">Hodnota konverze</div><div class="v">${f(totals.conversionValue,'Kč')}</div></div>
+        <div class="kpi-box"><div class="l">PNO</div><div class="v">${pno}</div></div>
+      </div>
+    </div>
+    ${channelsSectionHtml(byPlat, 'Kč')}
+    <div class="section-title">Kampaně — Česká republika</div>
+    ${['gads','sklik','meta'].map(p => chanBlockShell('cz', p, 'Kč')).join('')}
+    <div class="section-title">Kampaně — Slovensko</div>
+    ${['gads','meta'].map(p => chanBlockShell('sk', p, 'Kč')).join('')}`;
 }
 
 function refreshMarketSection(market, from, to) {
@@ -799,11 +851,9 @@ function renderContent() {
 
   let body = '';
   if (market === 'czsk') {
-    body = marketSectionHtml('cz', 'Česká republika', 'Kč', from, to)
-         + marketSectionHtml('sk', 'Slovensko', 'Kč', from, to);
+    body = czskSectionHtml(from, to);
   } else {
-    const cur = 'Kč';
-    body = marketSectionHtml(market, null, cur, from, to);
+    body = marketSectionHtml(market, null, 'Kč', from, to);
   }
 
   const fromFmt = new Date(from+'T12:00:00').toLocaleDateString('cs-CZ');
