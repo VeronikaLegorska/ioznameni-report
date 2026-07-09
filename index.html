@@ -129,44 +129,35 @@ main{padding:24px 32px 40px;max-width:1320px;margin:0 auto}
 .kpi-box .l{font-size:.7rem;text-transform:uppercase;letter-spacing:.04em;color:var(--gray-text);font-weight:600;margin-bottom:8px}
 .kpi-box .v{font-size:1.55rem;font-weight:700;color:var(--ink)}
 
-/* CHANNELS SECTION */
+/* CHANNEL BLOCKS — nový layout (full-width, bez gridu) */
+.ch-block{border-radius:var(--radius);border:1px solid var(--gray-line);margin-bottom:14px;overflow:hidden;box-shadow:var(--shadow)}
+.ch-head{display:flex;align-items:center;justify-content:space-between;padding:13px 20px;background:var(--gray-light);gap:12px;flex-wrap:wrap}
+.ch-head-left{display:flex;align-items:center;gap:10px}
+.ch-head-accent{width:4px;height:28px;border-radius:2px;flex-shrink:0}
+.ch-head-name{font-weight:700;font-size:.95rem;color:var(--ink)}
+.ch-head-icon{width:24px;height:24px;border-radius:6px;flex-shrink:0}
+.ch-badge{font-size:.65rem;font-weight:700;padding:2px 8px;border-radius:8px}
+.ch-badge-ok{background:#e6f4ec;color:#1a7a3c}
+.ch-badge-empty{background:var(--gray-line);color:var(--gray-text)}
+.ch-stats{display:flex;gap:0;flex-wrap:wrap}
+.ch-stat{padding:4px 16px;border-left:1px solid var(--gray-line);text-align:right}
+.ch-stat:first-child{border-left:none}
+.ch-stat-l{font-size:.63rem;text-transform:uppercase;letter-spacing:.05em;color:var(--gray-text);font-weight:600;white-space:nowrap}
+.ch-stat-v{font-size:.95rem;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink);white-space:nowrap}
+.ch-body{padding:14px 20px}
+.ch-kpi{display:flex;gap:16px;font-size:.75rem;color:var(--gray-text);margin-bottom:14px;flex-wrap:wrap}
+.ch-kpi strong{color:var(--ink)}
+.ch-no-data{padding:20px 20px;color:var(--gray-text);font-size:.84rem;font-style:italic}
+
+/* CAMP TABLE tweaks for full-width context */
+.camp-tbl td:first-child{max-width:none}
+.camp-name-text{max-width:min(340px,50vw)}
+
+/* compat stubs — nouzove zachovani pro pripad pouziti jinde */
 .section-title{font-weight:600;font-size:.95rem;margin-bottom:14px;margin-top:6px}
-.channels-grid{display:grid;grid-template-columns:1.4fr 1fr;gap:16px;margin-bottom:28px}
-.chart-card{background:var(--white);border:2px solid var(--gold);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow)}
-.chart-card-title{font-size:.78rem;font-weight:700;color:var(--ink);text-transform:uppercase;letter-spacing:.04em;margin-bottom:16px}
-.bar-chart{display:flex;align-items:flex-end;gap:24px;height:180px;padding:0 8px}
-.bar-col{display:flex;flex-direction:column;align-items:center;flex:1;height:100%;justify-content:flex-end}
-.bar-val{font-size:.74rem;font-weight:700;color:var(--ink);margin-bottom:6px}
-.bar-rect{width:44px;border-radius:5px 5px 0 0;transition:height .2s}
-.bar-name{margin-top:8px;font-size:.74rem;color:var(--gray-text);font-weight:600}
-.donut-wrap{display:flex;flex-direction:column;align-items:center}
-.donut-legend{display:flex;flex-direction:column;gap:7px;margin-top:14px;width:100%}
-.donut-legend-row{display:flex;align-items:center;gap:7px;font-size:.78rem;color:var(--ink)}
-.donut-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
-.donut-legend-row .pct{margin-left:auto;color:var(--gray-text);font-weight:600}
-
-/* PLATFORM GRID */
-.platform-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px}
-
-/* CARD */
-.card{background:var(--white);border:2px solid var(--gold);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden}
-.card-header{display:flex;align-items:center;gap:10px;padding:14px 18px;flex-wrap:wrap}
-.plat-icon{width:26px;height:26px;border-radius:6px;flex-shrink:0}
-.plat-name{font-weight:600;font-size:.88rem;color:var(--ink)}
-.plat-badge{font-size:.68rem;font-weight:600;padding:2px 9px;border-radius:9px;border:1px solid var(--gray-line);color:var(--gray-text);margin-left:auto}
-.b-ok{color:#1a7a3c;border-color:#cfe9d8}
-.b-empty{color:var(--gray-text)}
-.b-err{color:#c0392b;border-color:#f5d4d0}
-.card-body{padding:0 18px 16px}
-
-/* METRICS */
-.metrics{display:grid;grid-template-columns:1fr 1fr;gap:1px;margin-bottom:12px;background:var(--gray-line);border:1px solid var(--gray-line);border-radius:8px;overflow:hidden}
-.metric{background:var(--white);padding:9px 12px}
-.metric-l{font-size:.64rem;text-transform:uppercase;letter-spacing:.04em;color:var(--gray-text);font-weight:600;margin-bottom:2px}
-.metric-v{font-size:1.1rem;font-weight:700;color:var(--ink)}
-.kpi{display:flex;gap:14px;font-size:.76rem;color:var(--gray-text);border-top:1px solid var(--gray-line);padding-top:10px;flex-wrap:wrap}
-.kpi strong{color:var(--ink)}
 .no-data{text-align:center;padding:28px 0;color:#bbb;font-size:.85rem}
+.kpi{display:flex;gap:14px;font-size:.76rem;color:var(--gray-text);flex-wrap:wrap}
+.kpi strong{color:var(--ink)}
 
 /* CAMPAIGN TABLE */
 .camp-section{margin-top:16px;border-top:1px solid var(--gray-line);padding-top:12px}
@@ -408,6 +399,7 @@ function campRow(c, cur, totalSpend, accentColor) {
   const pnoTxt = cConvval > 0 ? (cSpend/cConvval*100).toFixed(1)+'%' : '—';
   const convvalTxt = cConvval > 0 ? f(cConvval, cur) : `<span class="camp-zero">${fn(cClicks)} kl</span>`;
   const convsTxt = cConvs > 0 ? (Number.isInteger(cConvs) ? cConvs : cConvs.toFixed(1)) : `<span class="camp-zero">—</span>`;
+  const clicksTxt = cClicks > 0 ? fn(cClicks) : `<span class="camp-zero">—</span>`;
   return `<tr>
     <td>
       <div class="camp-name-wrap">
@@ -419,6 +411,7 @@ function campRow(c, cur, totalSpend, accentColor) {
     <td>${convvalTxt}</td>
     <td class="${pnoCls}">${pnoTxt}</td>
     <td>${convsTxt}</td>
+    <td>${clicksTxt}</td>
   </tr>`;
 }
 
@@ -595,38 +588,76 @@ function channelTableHtml(byPlat, cur) {
   </table>`;
 }
 
-function channelsSectionHtml(market, cur, from, to) {
-  const byPlat = channelStats(market, from, to);
+// ── CHANNEL BLOCK (nový full-width layout) ─────────────────────────────────
+function channelBlockHtml(market, plat, cur, from, to) {
+  const stats = aggPlatform(allData, market, plat, from, to);
+  const hasData = stats.spend > 0 || stats.clicks > 0;
+  const convval = stats.conversionValue || 0;
+  const pno = convval > 0 ? (stats.spend / convval * 100).toFixed(1) + ' %' : '—';
+  const accent = COLOR_HEX[plat];
+  const icon = ICONS[plat] || '';
+  const camps = (stats.campaigns || []).filter(c => (c.spend||0)>0 || (c.clicks||0)>0);
+  const totalSpend = stats.spend || 0;
+
+  const statsHtml = hasData ? `
+    <div class="ch-stats">
+      <div class="ch-stat"><div class="ch-stat-l">Spend</div><div class="ch-stat-v">${f(stats.spend,cur)}</div></div>
+      <div class="ch-stat"><div class="ch-stat-l">Hodn. konv.</div><div class="ch-stat-v" style="color:var(--pink)">${convval>0?f(convval,cur):'—'}</div></div>
+      <div class="ch-stat"><div class="ch-stat-l">PNO</div><div class="ch-stat-v" style="color:${convval>0?(stats.spend/convval<0.35?'#2a8a3a':stats.spend/convval<0.6?'var(--gold)':'var(--pink)'):'var(--gray-text)'}">${pno}</div></div>
+      <div class="ch-stat"><div class="ch-stat-l">Konverze</div><div class="ch-stat-v">${fn(Math.round(stats.conversions||0))}</div></div>
+      <div class="ch-stat"><div class="ch-stat-l">Kliky</div><div class="ch-stat-v">${fn(stats.clicks)}</div></div>
+    </div>` : `<span class="ch-badge ch-badge-empty">bez dat</span>`;
+
+  const campTableHtml = camps.length ? `
+    <div style="overflow-x:auto">
+      <table class="camp-tbl">
+        <thead><tr>
+          <th style="text-align:left">Kampaň</th>
+          <th>Spend</th><th>Hodn. konv.</th><th>PNO</th><th>Konv.</th><th>Kliky</th>
+        </tr></thead>
+        <tbody>${camps.map(c => campRow(c, cur, totalSpend, accent)).join('')}</tbody>
+      </table>
+    </div>` : '';
+
+  const kpiLine = hasData ? `<div class="ch-kpi">
+    <span>CTR <strong>${fpct(stats.clicks,stats.impressions)}</strong></span>
+    <span>CPC <strong>${fcpc(stats.spend,stats.clicks)} ${cur}</strong></span>
+    ${(stats.conversions||0)>0?`<span>CPA <strong>${fcpc(stats.spend,stats.conversions)} ${cur}</strong></span>`:''}
+    <span>Zobrazení <strong>${fn(stats.impressions)}</strong></span>
+  </div>` : '';
+
   return `
-    <div class="section-title">Rozpad po kanálech</div>
-    <div class="channels-grid">
-      <div class="chart-card">
-        <div class="chart-card-title">Spend po kanálech</div>
-        ${barChartHtml(byPlat, cur)}
+  <div class="ch-block" id="chblock-${market}-${plat}">
+    <div class="ch-head">
+      <div class="ch-head-left">
+        <div class="ch-head-accent" style="background:${accent}"></div>
+        ${icon ? `<img class="ch-head-icon" src="${icon}" alt="">` : ''}
+        <span class="ch-head-name">${NAMES[plat]}</span>
+        ${hasData ? `<span class="ch-badge ch-badge-ok">aktivní</span>` : ''}
       </div>
-      <div class="chart-card">
-        <div class="chart-card-title">Podíl spendu</div>
-        ${donutCardHtml(byPlat)}
-      </div>
+      ${statsHtml}
     </div>
-    <div class="chart-card" style="margin-top:14px">${channelTableHtml(byPlat, cur)}</div>`;
+    ${hasData ? `<div class="ch-body">${kpiLine}${campTableHtml}</div>` : `<div class="ch-no-data">Bez aktivity ve zvoleném období</div>`}
+  </div>`;
 }
 
-// ── FULL MARKET SECTION (kpis + channels + platform cards) ─────────────────
+// ── FULL MARKET SECTION ─────────────────────────────────────────────────────
 function marketSectionHtml(market, label, cur, from, to) {
   const plats = market==='cz' ? ['gads','sklik','meta'] : ['gads','meta'];
   return `
     ${kpiBlockHtml(market, label, cur, from, to)}
-    ${channelsSectionHtml(market, cur, from, to)}
-    <div class="section-title">Detail kanálů</div>
-    <div class="platform-grid">
-      ${plats.map(p => platCardShell(market,p,cur)).join('')}
+    <div id="chblocks-${market}">
+      ${plats.map(p => channelBlockHtml(market, p, cur, from, to)).join('')}
     </div>`;
 }
 
 function refreshMarketSection(market, from, to) {
+  const cur = market === 'sk' ? 'EUR' : 'Kč';
   const plats = market==='cz' ? ['gads','sklik','meta'] : ['gads','meta'];
-  plats.forEach(p => refreshCard(market, p, from, to));
+  plats.forEach(p => {
+    const el = document.getElementById(`chblock-${market}-${p}`);
+    if (el) el.outerHTML = channelBlockHtml(market, p, cur, from, to);
+  });
 }
 
 // ── TOGGLE HELPERS ─────────────────────────────────────────────────────────
@@ -867,13 +898,6 @@ function renderContent() {
     </div>
     ${body}
     <div class="footer">Data ${fromFmt} – ${toFmt} · obnovuje se každých 5 min</div>`;
-
-  if (market === 'czsk') {
-    refreshMarketSection('cz', from, to);
-    refreshMarketSection('sk', from, to);
-  } else {
-    refreshMarketSection(market, from, to);
-  }
 }
 
 async function render() {
