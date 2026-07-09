@@ -168,18 +168,28 @@ main{padding:24px 32px 40px;max-width:1320px;margin:0 auto}
 .kpi strong{color:var(--ink)}
 .no-data{text-align:center;padding:28px 0;color:#bbb;font-size:.85rem}
 
-/* CAMPAIGN LIST */
-.camp-toggle{margin-top:10px;font-size:.76rem;color:var(--gray-text);cursor:pointer;font-weight:600;user-select:none;display:flex;align-items:center;gap:4px}
-.camp-toggle:hover{color:var(--ink)}
-.camp-list{display:none;margin-top:8px}
-.camp-list.open{display:block}
-
-/* CAMPAIGN ROW */
-.camp-row{border-bottom:1px solid var(--gray-line);padding:6px 0}
-.camp-row:last-child{border-bottom:none}
-.camp-row-header{display:flex;justify-content:space-between;align-items:center;cursor:pointer}
-.camp-row-name{font-size:.79rem;font-weight:500;color:var(--ink);max-width:65%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.camp-row-nums{font-size:.78rem;color:var(--ink);font-weight:600;display:flex;gap:10px}
+/* CAMPAIGN TABLE */
+.camp-section{margin-top:16px;border-top:1px solid var(--gray-line);padding-top:12px}
+.camp-section-label{font-size:.7rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--gray-text);margin-bottom:8px}
+.camp-tbl{width:100%;border-collapse:collapse;font-size:.78rem;font-variant-numeric:tabular-nums}
+.camp-tbl th{font-size:.67rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--gray-text);padding:0 6px 6px;text-align:right;white-space:nowrap;border-bottom:2px solid var(--gray-line)}
+.camp-tbl th:first-child{text-align:left;padding-left:0}
+.camp-tbl td{padding:6px 6px;vertical-align:middle;border-bottom:1px solid var(--gray-line);color:var(--ink)}
+.camp-tbl td:first-child{padding-left:0;max-width:180px}
+.camp-tbl tr:last-child td{border-bottom:none}
+.camp-tbl td:not(:first-child){text-align:right;font-weight:600}
+.camp-name-wrap{display:flex;flex-direction:column;gap:3px}
+.camp-name-text{font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px}
+.camp-spend-bar-wrap{height:3px;background:var(--gray-line);border-radius:2px;width:100%}
+.camp-spend-bar{height:3px;border-radius:2px;min-width:2px}
+.camp-pno-good{color:#2a8a3a}
+.camp-pno-ok{color:var(--gold)}
+.camp-pno-bad{color:var(--pink)}
+.camp-zero{color:var(--gray-text);font-weight:400}
+/* legacy — keep for adsets */
+.camp-toggle{display:none}
+.camp-list{display:none}
+.camp-row{display:none}
 
 /* ADSETS */
 .adsets{padding:4px 0 0 10px;display:none}
@@ -386,45 +396,65 @@ function adThumb(ad) {
   return `<div class="ad-thumb"><img src="${url}" alt="${name}" loading="lazy" onerror="this.parentElement.outerHTML='<div class=&quot;ad-noimg&quot;>?</div>'" onclick="openLightbox('${url}','${name}')"></div>`;
 }
 
-function campRow(c, cur) {
-  const hasSets = c.adsets?.length > 0;
-  const id = 'c'+Math.random().toString(36).slice(2);
-  let adsetsHtml = '';
-  if (hasSets) {
-    adsetsHtml = c.adsets.map(as => {
-      const ads = (as.ads||[]);
-      const thumbsHtml = ads.length ? `<div class="ads-row">${ads.map(ad=>adThumb(ad)).join('')}</div>` : '';
-      return `<div class="adset-row"><div class="adset-name">${as.name}</div>${thumbsHtml}</div>`;
-    }).join('');
-  }
+function campRow(c, cur, totalSpend, accentColor) {
   const cSpend = Math.round((c.spend||0)*100)/100;
-  const cConvval = c.conversionValue||0;
-  const cPno = cConvval>0 ? (cSpend/cConvval*100).toFixed(1)+'%' : '—';
-  return `
-    <div class="camp-row">
-      <div class="camp-row-header" onclick="toggleAdsets('${id}')">
-        <span class="camp-row-name" title="${c.name}">${c.name}${c.is_product?' 🛒':''}</span>
-        <span class="camp-row-nums">
-          <span>${f(cSpend, cur)}</span>
-          ${cConvval>0?`<span style="color:var(--green-dark,#4a7a20)">${f(cConvval,cur)}</span><span style="color:var(--ink);opacity:.7">${cPno}</span>`:`<span>${fn(c.clicks)} kl</span>`}
-        </span>
+  const cConvval = Math.round((c.conversionValue||0)*100)/100;
+  const cConvs = Math.round((c.conversions||0)*10)/10;
+  const cClicks = c.clicks||0;
+  const pct = totalSpend > 0 ? Math.max(2, Math.round(cSpend/totalSpend*100)) : 0;
+  const pnoCls = cConvval > 0
+    ? (cSpend/cConvval < 0.35 ? 'camp-pno-good' : cSpend/cConvval < 0.6 ? 'camp-pno-ok' : 'camp-pno-bad')
+    : 'camp-zero';
+  const pnoTxt = cConvval > 0 ? (cSpend/cConvval*100).toFixed(1)+'%' : '—';
+  const convvalTxt = cConvval > 0 ? f(cConvval, cur) : `<span class="camp-zero">${fn(cClicks)} kl</span>`;
+  const convsTxt = cConvs > 0 ? (Number.isInteger(cConvs) ? cConvs : cConvs.toFixed(1)) : `<span class="camp-zero">—</span>`;
+  return `<tr>
+    <td>
+      <div class="camp-name-wrap">
+        <span class="camp-name-text" title="${c.name}">${c.name}${c.is_product?' 🛒':''}</span>
+        <div class="camp-spend-bar-wrap"><div class="camp-spend-bar" style="width:${pct}%;background:${accentColor}"></div></div>
       </div>
-      ${hasSets ? `<div class="adsets" id="${id}">${adsetsHtml}</div>` : ''}
-    </div>`;
+    </td>
+    <td>${cSpend>0?f(cSpend,cur):'<span class="camp-zero">—</span>'}</td>
+    <td>${convvalTxt}</td>
+    <td class="${pnoCls}">${pnoTxt}</td>
+    <td>${convsTxt}</td>
+  </tr>`;
 }
 
 // ── PLATFORM CARD ────────────────────────────────────────────────────────────
-function renderCardBody(stats, cur) {
+const PLAT_ACCENT = { gads: 'var(--gold)', meta: 'var(--pink)', sklik: 'var(--green)' };
+
+function renderCardBody(stats, cur, platKey) {
   const hasData = stats && (stats.spend>0 || stats.clicks>0);
-  const camps = stats?.campaigns || [];
-  const cid = 'camps'+Math.random().toString(36).slice(2);
-  const campsHtml = camps.length ? `
-    <div class="camp-toggle" onclick="toggleEl('${cid}',this)">▸ ${camps.length} kampaní</div>
-    <div class="camp-list" id="${cid}">${camps.map(c=>campRow(c,cur)).join('')}</div>` : '';
+  if (!hasData) return `<div class="no-data">Bez aktivity ve zvoleném období</div>`;
 
   const convval = stats.conversionValue||0;
   const pno = convval>0 ? (stats.spend/convval*100).toFixed(2)+' %' : '—';
-  if (!hasData) return `<div class="no-data">Bez aktivity ve zvoleném období</div>`;
+  const accent = PLAT_ACCENT[platKey] || 'var(--gold)';
+
+  const camps = (stats?.campaigns || []).filter(c => (c.spend||0) > 0 || (c.clicks||0) > 0);
+  const totalSpend = stats.spend || 0;
+  let campsHtml = '';
+  if (camps.length) {
+    campsHtml = `
+    <div class="camp-section">
+      <div class="camp-section-label">Kampaně</div>
+      <div style="overflow-x:auto">
+        <table class="camp-tbl">
+          <thead><tr>
+            <th style="text-align:left">Název</th>
+            <th>Spend</th>
+            <th>Hodn. konv.</th>
+            <th>PNO</th>
+            <th>Konv.</th>
+          </tr></thead>
+          <tbody>${camps.map(c => campRow(c, cur, totalSpend, accent)).join('')}</tbody>
+        </table>
+      </div>
+    </div>`;
+  }
+
   return `
     <div class="metrics">
       <div class="metric"><div class="metric-l">Spend</div><div class="metric-v">${f(stats.spend,cur)}</div></div>
@@ -464,7 +494,7 @@ function refreshCard(market, plat, from, to) {
   const hasData = stats.spend>0 || stats.clicks>0;
   document.getElementById(`${cardId}-badge`).className = 'plat-badge ' + (hasData?'b-ok':'b-empty');
   document.getElementById(`${cardId}-badge`).textContent = hasData?'aktivní':'bez dat';
-  document.getElementById(`${cardId}-body`).innerHTML = renderCardBody(stats, cur);
+  document.getElementById(`${cardId}-body`).innerHTML = renderCardBody(stats, cur, plat);
 }
 
 // ── KPI BLOCK (Spend / Hodnota konverze / PNO) ──────────────────────────────
