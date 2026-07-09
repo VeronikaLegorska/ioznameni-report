@@ -800,9 +800,9 @@ function renderContent() {
   let body = '';
   if (market === 'czsk') {
     body = marketSectionHtml('cz', 'Česká republika', 'Kč', from, to)
-         + marketSectionHtml('sk', 'Slovensko', '€', from, to);
+         + marketSectionHtml('sk', 'Slovensko', 'Kč', from, to);
   } else {
-    const cur = market==='cz' ? 'Kč' : '€';
+    const cur = 'Kč';
     body = marketSectionHtml(market, null, cur, from, to);
   }
 
