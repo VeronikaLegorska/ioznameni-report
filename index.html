@@ -145,8 +145,13 @@ main{padding:24px 32px 40px;max-width:1320px;margin:0 auto}
 .donut-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
 .donut-legend-row .pct{margin-left:auto;color:var(--gray-text);font-weight:600}
 
-/* PLATFORM GRID */
+/* PLATFORM GRID (legacy, unused) */
 .platform-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px}
+
+/* CHANNEL TABLE BLOCKS */
+.chan-block{border-radius:var(--radius);border:1px solid var(--gray-line);margin-bottom:14px;overflow:hidden;box-shadow:var(--shadow)}
+.chan-block-head{display:flex;align-items:center;gap:10px;padding:12px 18px;border-left:4px solid #FDBA01;background:var(--gray-light)}
+.chan-block-body{padding:0 18px 14px}
 
 /* CARD */
 .card{background:var(--white);border:2px solid var(--gold);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden}
@@ -422,79 +427,48 @@ function campRow(c, cur, totalSpend, accentColor) {
   </tr>`;
 }
 
-// ── PLATFORM CARD ────────────────────────────────────────────────────────────
-const PLAT_ACCENT = { gads: 'var(--gold)', meta: 'var(--pink)', sklik: 'var(--green)' };
-
-function renderCardBody(stats, cur, platKey) {
-  const hasData = stats && (stats.spend>0 || stats.clicks>0);
-  if (!hasData) return `<div class="no-data">Bez aktivity ve zvoleném období</div>`;
-
-  const convval = stats.conversionValue||0;
-  const pno = convval>0 ? (stats.spend/convval*100).toFixed(2)+' %' : '—';
-  const accent = PLAT_ACCENT[platKey] || 'var(--gold)';
-
-  const camps = (stats?.campaigns || []).filter(c => (c.spend||0) > 0 || (c.clicks||0) > 0);
-  const totalSpend = stats.spend || 0;
-  let campsHtml = '';
-  if (camps.length) {
-    campsHtml = `
-    <div class="camp-section">
-      <div class="camp-section-label">Kampaně</div>
-      <div style="overflow-x:auto">
-        <table class="camp-tbl">
-          <thead><tr>
-            <th style="text-align:left">Název</th>
-            <th>Spend</th>
-            <th>Hodn. konv.</th>
-            <th>PNO</th>
-            <th>Konv.</th>
-          </tr></thead>
-          <tbody>${camps.map(c => campRow(c, cur, totalSpend, accent)).join('')}</tbody>
-        </table>
-      </div>
-    </div>`;
-  }
-
+// ── CHANNEL TABLE BLOCKS ─────────────────────────────────────────────────────
+function chanBlockShell(market, key, cur) {
+  const id = `ctbl-${market}-${key}`;
   return `
-    <div class="metrics">
-      <div class="metric"><div class="metric-l">Spend</div><div class="metric-v">${f(stats.spend,cur)}</div></div>
-      <div class="metric"><div class="metric-l">Hodnota konverze</div><div class="metric-v" style="color:var(--pink)">${convval>0?f(convval,cur):'—'}</div></div>
-      <div class="metric"><div class="metric-l">PNO</div><div class="metric-v" style="color:var(--gold)">${pno}</div></div>
-      <div class="metric"><div class="metric-l">Kliky</div><div class="metric-v">${fn(stats.clicks)}</div></div>
-      <div class="metric"><div class="metric-l">Zobrazení</div><div class="metric-v">${fn(stats.impressions)}</div></div>
-      <div class="metric"><div class="metric-l">Konverze</div><div class="metric-v">${fn(Math.round(stats.conversions||0))}</div></div>
-    </div>
-    <div class="kpi">
-      <span>CTR <strong>${fpct(stats.clicks,stats.impressions)}</strong></span>
-      <span>CPC <strong>${fcpc(stats.spend,stats.clicks)} ${cur}</strong></span>
-      ${(stats.conversions||0)>0?`<span>CPA <strong>${fcpc(stats.spend,stats.conversions)} ${cur}</strong></span>`:''}
-    </div>
-    ${campsHtml}`;
-}
-
-function platCardShell(market, key, cur) {
-  const cardId = `card-${market}-${key}`;
-  return `
-    <div class="card" id="${cardId}" data-market="${market}" data-plat="${key}" data-cur="${cur}">
-      <div class="card-header">
+    <div class="chan-block" id="${id}" data-market="${market}" data-plat="${key}" data-cur="${cur}">
+      <div class="chan-block-head" style="border-left-color:${COLOR_HEX[key]}">
         ${ICONS[key]}
         <span class="plat-name">${NAMES[key]}</span>
-        <span class="plat-badge" id="${cardId}-badge"></span>
+        <span class="plat-badge" id="${id}-badge"></span>
       </div>
-      <div class="card-body" id="${cardId}-body">…</div>
+      <div class="chan-block-body" id="${id}-body"><div class="no-data">Načítám…</div></div>
     </div>`;
 }
 
-function refreshCard(market, plat, from, to) {
-  const cardId = `card-${market}-${plat}`;
-  const cardEl = document.getElementById(cardId);
-  if (!cardEl) return;
-  const cur  = cardEl.dataset.cur;
+function renderChanBody(stats, cur, platKey) {
+  const hasData = stats && (stats.spend > 0 || stats.clicks > 0);
+  if (!hasData) return `<div class="no-data">Bez aktivity ve zvoleném období</div>`;
+  const camps = (stats?.campaigns || []).filter(c => (c.spend||0) > 0 || (c.clicks||0) > 0);
+  if (!camps.length) return `<div class="no-data">Žádné kampaně</div>`;
+  const totalSpend = stats.spend || 0;
+  const accent = COLOR_HEX[platKey] || '#FDBA01';
+  return `<div style="overflow-x:auto">
+    <table class="camp-tbl" style="margin-top:10px">
+      <thead><tr>
+        <th style="text-align:left">Kampaň</th>
+        <th>Spend</th><th>Hodn. konv.</th><th>PNO</th><th>Konv.</th>
+      </tr></thead>
+      <tbody>${camps.map(c => campRow(c, cur, totalSpend, accent)).join('')}</tbody>
+    </table>
+  </div>`;
+}
+
+function refreshChan(market, plat, from, to) {
+  const id = `ctbl-${market}-${plat}`;
+  const el = document.getElementById(id);
+  if (!el) return;
+  const cur = el.dataset.cur;
   const stats = aggPlatform(allData, market, plat, from, to);
-  const hasData = stats.spend>0 || stats.clicks>0;
-  document.getElementById(`${cardId}-badge`).className = 'plat-badge ' + (hasData?'b-ok':'b-empty');
-  document.getElementById(`${cardId}-badge`).textContent = hasData?'aktivní':'bez dat';
-  document.getElementById(`${cardId}-body`).innerHTML = renderCardBody(stats, cur, plat);
+  const hasData = stats.spend > 0 || stats.clicks > 0;
+  document.getElementById(`${id}-badge`).className = 'plat-badge ' + (hasData ? 'b-ok' : 'b-empty');
+  document.getElementById(`${id}-badge`).textContent = hasData ? 'aktivní' : 'bez dat';
+  document.getElementById(`${id}-body`).innerHTML = renderChanBody(stats, cur, plat);
 }
 
 // ── KPI BLOCK (Spend / Hodnota konverze / PNO) ──────────────────────────────
@@ -612,21 +586,19 @@ function channelsSectionHtml(market, cur, from, to) {
     <div class="chart-card" style="margin-top:14px">${channelTableHtml(byPlat, cur)}</div>`;
 }
 
-// ── FULL MARKET SECTION (kpis + channels + platform cards) ─────────────────
+// ── FULL MARKET SECTION (kpis + channels + campaign tables) ─────────────────
 function marketSectionHtml(market, label, cur, from, to) {
   const plats = market==='cz' ? ['gads','sklik','meta'] : ['gads','meta'];
   return `
     ${kpiBlockHtml(market, label, cur, from, to)}
     ${channelsSectionHtml(market, cur, from, to)}
-    <div class="section-title">Detail kanálů</div>
-    <div class="platform-grid">
-      ${plats.map(p => platCardShell(market,p,cur)).join('')}
-    </div>`;
+    <div class="section-title">Kampaně</div>
+    ${plats.map(p => chanBlockShell(market, p, cur)).join('')}`;
 }
 
 function refreshMarketSection(market, from, to) {
   const plats = market==='cz' ? ['gads','sklik','meta'] : ['gads','meta'];
-  plats.forEach(p => refreshCard(market, p, from, to));
+  plats.forEach(p => refreshChan(market, p, from, to));
 }
 
 // ── TOGGLE HELPERS ─────────────────────────────────────────────────────────
